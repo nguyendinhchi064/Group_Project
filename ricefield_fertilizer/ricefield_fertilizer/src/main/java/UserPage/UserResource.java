@@ -10,7 +10,7 @@ public class UserResource {
     @POST
     @Path("/AddProJect")
     public Response AddProject(ProjDb projDb) {
-        ProjDb.addProject(projDb.projname, projDb.discription);
+        ProjDb.addProject(projDb.projname, projDb.description);
         return Response.ok(null).build();
     }
 }

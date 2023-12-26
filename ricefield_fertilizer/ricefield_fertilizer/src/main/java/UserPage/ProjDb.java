@@ -18,8 +18,8 @@ public class ProjDb extends PanacheEntityBase {
     @Column(name = "Projname")
     public String projname;
     @Basic
-    @Column(name = "Discription")
-    public String discription;
+    @Column(name = "Description")
+    public String description;
     @Basic
     @Column(name = "Userid")
     private Integer userid;
@@ -41,11 +41,11 @@ public class ProjDb extends PanacheEntityBase {
     }
 
     public String getDiscription() {
-        return discription;
+        return description;
     }
 
-    public void setDiscription(String discription) {
-        this.discription = discription;
+    public void setDiscription(String description) {
+        this.description = description;
     }
 
     public Integer getUserid() {
@@ -65,7 +65,7 @@ public class ProjDb extends PanacheEntityBase {
 
         if (projId != projDb.projId) return false;
         if (!Objects.equals(projname, projDb.projname)) return false;
-        if (!Objects.equals(discription, projDb.discription)) return false;
+        if (!Objects.equals(description, projDb.description)) return false;
         return Objects.equals(userid, projDb.userid);
     }
 
@@ -73,7 +73,7 @@ public class ProjDb extends PanacheEntityBase {
     public int hashCode() {
         int result = projId;
         result = 31 * result + (projname != null ? projname.hashCode() : 0);
-        result = 31 * result + (discription != null ? discription.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (userid != null ? userid.hashCode() : 0);
         return result;
     }
@@ -89,9 +89,7 @@ public class ProjDb extends PanacheEntityBase {
             projDb.persist();
 
             // Optionally, you can return a response with a status code and URI to the created resource
-            return Response.created(UriBuilder.fromResource(UserResource.class).path(String.valueOf(projDb.getProjId())).build())
-                    .entity("Project created successfully")
-                    .build();
+            return null;
         } catch (Exception e) {
             // Handle exceptions, log, and return an appropriate response
             return Response.serverError().entity("Failed to create project").build();
