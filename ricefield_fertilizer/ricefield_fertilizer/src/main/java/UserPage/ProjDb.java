@@ -3,8 +3,6 @@ package UserPage;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
 import java.util.Objects;
 
 @Entity
@@ -40,11 +38,11 @@ public class ProjDb extends PanacheEntityBase {
         this.projname = projname;
     }
 
-    public String getDiscription() {
+    public String getDescription() {
         return description;
     }
 
-    public void setDiscription(String description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
@@ -78,21 +76,29 @@ public class ProjDb extends PanacheEntityBase {
         return result;
     }
 
+    public static ProjDb findById(int id) {
+        return find("projId", id).firstResult();
+    }
+
     @Transactional
-    public static Response addProject(String projname, String discription) {
-        try {
-            ProjDb projDb = new ProjDb();
-            projDb.setProjname(projname);
-            projDb.setDiscription(discription);
+    public static ProjDb updateProject(int projId, ProjDb updatedProject) {
+        ProjDb existingProject = findById(projId);
 
-            // Persist the new project entity
-            projDb.persist();
+        if (existingProject != null) {
+            existingProject.setProjname(updatedProject.getProjname());
+            existingProject.setDescription(updatedProject.getDescription());
+            existingProject.setUserid(updatedProject.getUserid());
+            existingProject.persist();
+        }
 
-            // Optionally, you can return a response with a status code and URI to the created resource
-            return null;
-        } catch (Exception e) {
-            // Handle exceptions, log, and return an appropriate response
-            return Response.serverError().entity("Failed to create project").build();
+        return existingProject;
+    }
+
+    @Transactional
+    public static void deleteProject(int projId) {
+        ProjDb project = findById(projId);
+        if (project != null) {
+            project.delete();
         }
     }
 }

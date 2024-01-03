@@ -16,8 +16,6 @@ import io.quarkus.security.jpa.UserDefinition;
 import io.quarkus.security.jpa.Username;
 import jakarta.ws.rs.core.Response;
 
-import java.util.List;
-
 import java.util.regex.Pattern;
 
 
@@ -91,25 +89,12 @@ public class User extends PanacheEntityBase {
     final static String USERROLE = "User";
     final static String ADMINROLE = "Admin";
 
-    /**
-     * Adds a new user to the database
-     *
-     * @param username the username
-     * @param password the unencrypted password (it will be encrypted with bcrypt)
-     * @param role     the comma-separated roles
-     * @return null
-     */
-    @Transactional
-    public static String add(String username, String password, String role, String email) {
-        User user = new User();
-        user.setUsername(username);
-        user.setRole(role);
-        user.setPassword(password);
-        user.setEmail(email);
 
-        if (USERROLE.equals(user.getRole()) || ADMINROLE.equals(user.getRole())) {
-            user.persist();
-            return Response.ok(user).build().toString();
+    @Transactional
+    public String add() {
+        if (USERROLE.equals(getRole()) || ADMINROLE.equals(getRole())) {
+            persist();
+            return Response.ok(this).build().toString();
         } else {
             System.out.println("Invalid role");
             return "Invalid role";
@@ -118,27 +103,22 @@ public class User extends PanacheEntityBase {
 
 
 
-    private static boolean userExists(String username) {
+    private boolean userExists(String username) {
         return (User.count("username", username) > 0);
     }
 
-    private static boolean emailExists(String email) {
+    private boolean emailExists(String email) {
         return (User.count("email", email) > 0);
     }
 
-    public static User findByName(String username) {
-        return find("username", username).firstResult();
+    public User findByEmail(String email) {
+        return find("email", email).firstResult();
     }
 
-    public static List<User> findByNamePass(String username, String password) {
-        return User.list("username = ?1 and password = ?2",
-                username, BcryptUtil.bcryptHash(password));
-    }
 
-    private static boolean isValidPassword(String password) {
+    private boolean isValidPassword(String password) {
         // Minimum length of 5 characters, at least one uppercase letter, and at least one special character
         String regex = "^(?=.*[A-Z])(?=.*[!@#$%^&*()-+]).{5,}$";
         return Pattern.matches(regex, password);
     }
 }
-
