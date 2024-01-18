@@ -1,14 +1,21 @@
-package UserPage;
+package UserPage.model;
 
+import Login_Register.model.User;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.inject.Inject;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.jwt.Claim;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import java.util.Objects;
+
 
 @Entity
 @Table(name = "proj_db", schema = "mydatabase")
 public class ProjDb extends PanacheEntityBase {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Id
     @Column(name = "ProjID")
     private int projId;
@@ -18,9 +25,9 @@ public class ProjDb extends PanacheEntityBase {
     @Basic
     @Column(name = "Description")
     public String description;
-    @Basic
-    @Column(name = "Userid")
-    private Integer userid;
+    @ManyToOne
+    @JoinColumn(name = "UserID")
+    private User user;
 
     public int getProjId() {
         return projId;
@@ -46,14 +53,13 @@ public class ProjDb extends PanacheEntityBase {
         this.description = description;
     }
 
-    public Integer getUserid() {
-        return userid;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserid(Integer userid) {
-        this.userid = userid;
+    public void setUser(User user) {
+        this.user = user;
     }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -63,8 +69,7 @@ public class ProjDb extends PanacheEntityBase {
 
         if (projId != projDb.projId) return false;
         if (!Objects.equals(projname, projDb.projname)) return false;
-        if (!Objects.equals(description, projDb.description)) return false;
-        return Objects.equals(userid, projDb.userid);
+        return Objects.equals(description, projDb.description);
     }
 
     @Override
@@ -72,7 +77,6 @@ public class ProjDb extends PanacheEntityBase {
         int result = projId;
         result = 31 * result + (projname != null ? projname.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (userid != null ? userid.hashCode() : 0);
         return result;
     }
 
@@ -87,7 +91,6 @@ public class ProjDb extends PanacheEntityBase {
         if (existingProject != null) {
             existingProject.setProjname(updatedProject.getProjname());
             existingProject.setDescription(updatedProject.getDescription());
-            existingProject.setUserid(updatedProject.getUserid());
             existingProject.persist();
         }
 

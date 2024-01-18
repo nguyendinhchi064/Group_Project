@@ -1,15 +1,21 @@
 package Login_Register.resources;
 
-import Login_Register.User;
 import Login_Register.model.LoginRequest;
+import Login_Register.model.User;
+import io.smallrye.jwt.build.Jwt;
+import jakarta.inject.Inject;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.util.ModularCrypt;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
-public class UserService {
+
+public class AuthService {
+
     public boolean verifyPassword(String bCryptPasswordHash, String passwordToVerify) throws Exception {
         WildFlyElytronPasswordProvider provider = new WildFlyElytronPasswordProvider();
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT, provider);
@@ -43,5 +49,12 @@ public class UserService {
             return false;
         }
     }
+    public String generate(String username) {
+        String token =
+                Jwt.upn(username)
+                        .groups(new HashSet<>(Arrays.asList("User", "Admin")))
+                        .sign();
+        System.out.println(token);
+        return token;
+    }
 }
-
