@@ -2,6 +2,7 @@ package Login_Register.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.smallrye.jwt.build.Jwt;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
@@ -12,6 +13,7 @@ import io.quarkus.security.jpa.UserDefinition;
 import io.quarkus.security.jpa.Username;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -86,26 +88,9 @@ public class User extends PanacheEntityBase {
     }
 
     public void setRole(String role) {
-        if (USERROLE.equals(role) || ADMINROLE.equals(role)) {
-            this.role = role;
-        } else {
-            throw new IllegalArgumentException("Invalid role");
-        }
+        this.role = role;
     }
 
-    final static String USERROLE = "User";
-    final static String ADMINROLE = "Admin";
-
-    public boolean isAdmin() {
-        return ADMINROLE.equals(role);
-    }
-    public List<String> generateGroups() {
-        if (isAdmin()) {
-            return Arrays.asList(USERROLE, ADMINROLE);
-        } else {
-            return Arrays.asList(USERROLE);
-        }
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -139,4 +124,37 @@ public class User extends PanacheEntityBase {
         return userid;
     }
 
+    // Check if the user is an admin
+    private boolean isAdmin() {
+        if(role.equals("Admin")){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private boolean isUser() {
+        if(role.equals("User")){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public String generate(User user) {
+        List<String> groups;
+        if (user.isAdmin()) {
+            groups = Arrays.asList("User", "Admin");
+        } else if(user.isUser()) {
+            groups = Arrays.asList("User");
+        }
+        else {
+            return "False";
+        }
+
+        String token =
+                Jwt.upn(user.username)
+                        .groups(new HashSet<>(groups))
+                        .sign();
+        System.out.println(token);
+        return token;
+    }
 }

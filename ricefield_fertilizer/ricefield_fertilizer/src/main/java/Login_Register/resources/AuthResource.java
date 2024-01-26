@@ -14,11 +14,13 @@ import java.util.HashSet;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.Claims;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import static io.smallrye.jwt.build.Jwt.claim;
 
 
 @Path("/auth")
+@Tag(name = "LoginRegister", description = "LoginRegister REST APIs")
 public class AuthResource {
 
     @POST
@@ -40,10 +42,11 @@ public class AuthResource {
     @Path("/login")
     public String login(LoginRequest loginRequest) {
         AuthService authService = new AuthService();
-//        String userRole = userService.loginVerifyRole(loginRequest.username);
         if (authService.isValidLogin(loginRequest)) {
             System.out.println("Login success");
-            String token = authService.generate(loginRequest.username);
+            /* fetch user from database using request information */
+            User user = authService.getUser(loginRequest);
+            String token = user.generate(user);
             System.out.println("DEBUG #######: " + token);
             return token;
         } else {

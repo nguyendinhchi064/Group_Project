@@ -1,30 +1,28 @@
 package UserPage.resources;
 
 
-import Login_Register.model.User;
+import UserPage.model.FileUploadForm;
 import UserPage.model.ModelDb;
 import UserPage.model.ProjDb;
-import io.vertx.codegen.Model;
-import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+
+import java.io.InputStream;
 
 
 @Path("/user")
 @RolesAllowed("User")
 public class UserResource {
-    @Inject
-    UserService userService;
 
     @Transactional
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/AddProJect")
+    @Path("/AddProject")
     public Response AddProject(ProjDb projDb) {
         /*
         * get user_id;
@@ -33,9 +31,9 @@ public class UserResource {
         * projDb.persist()
         * */
         try {
-            Long userId = projDb.getUser().getUserid();
-            User user = User.findById(userId);
-            projDb.setUser(user);
+//            Long userId = projDb.getUser().getUserid();
+//            User user = User.findById(userId);
+//            projDb.setUser(user);
             projDb.persist();
             return Response.ok().build();
         } catch (Exception e) {
@@ -57,7 +55,7 @@ public class UserResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/UpdateProJectBy{projId}")
+    @Path("/UpdateProjectBy{projId}")
     public Response updateProject(@PathParam("projId") int projId, ProjDb updatedProject) {
         ProjDb updated = ProjDb.updateProject(projId, updatedProject);
         if (updated != null) {
@@ -78,12 +76,18 @@ public class UserResource {
     @POST
     @Transactional
     @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Path("/AddModel")
-    public String AddModel(ModelDb modelDb) {
+    public String addModel(@MultipartForm FileUploadForm fileForm, ModelDb modelDb) {
+        // Set the file content in the ModelDb instance
+        modelDb.setFileContent(fileForm.getFile());
+
+        // Save the ModelDb instance to the database
         modelDb.persist();
-        return "Register success";
+
+        return "Model added successfully";
     }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

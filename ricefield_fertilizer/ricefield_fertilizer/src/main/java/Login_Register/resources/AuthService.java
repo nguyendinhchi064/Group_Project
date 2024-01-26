@@ -3,14 +3,13 @@ package Login_Register.resources;
 import Login_Register.model.LoginRequest;
 import Login_Register.model.User;
 import io.smallrye.jwt.build.Jwt;
-import jakarta.inject.Inject;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.util.ModularCrypt;
 
-import java.util.Arrays;
-import java.util.HashSet;
+
 import java.util.List;
 
 
@@ -19,8 +18,8 @@ public class AuthService {
     public boolean verifyPassword(String bCryptPasswordHash, String passwordToVerify) throws Exception {
         WildFlyElytronPasswordProvider provider = new WildFlyElytronPasswordProvider();
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT, provider);
-        org.wildfly.security.password.Password userPasswordDecoded = ModularCrypt.decode(bCryptPasswordHash);
-        org.wildfly.security.password.Password userPasswordRestored = passwordFactory.translate(userPasswordDecoded);
+        Password userPasswordDecoded = ModularCrypt.decode(bCryptPasswordHash);
+        Password userPasswordRestored = passwordFactory.translate(userPasswordDecoded);
         System.out.println(bCryptPasswordHash);
         return passwordFactory.verify(userPasswordRestored, passwordToVerify.toCharArray());
     }
@@ -49,12 +48,13 @@ public class AuthService {
             return false;
         }
     }
-    public String generate(String username) {
-        String token =
-                Jwt.upn(username)
-                        .groups(new HashSet<>(Arrays.asList("User", "Admin")))
-                        .sign();
-        System.out.println(token);
-        return token;
+
+
+    public User getUser(LoginRequest loginRequest) {
+        List<User> userList = User.list("username = ?1", loginRequest.username);
+        if (!userList.isEmpty()) {
+            return userList.get(0);
+        }
+        return null;
     }
 }

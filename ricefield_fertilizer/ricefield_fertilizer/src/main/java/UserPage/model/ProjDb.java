@@ -25,9 +25,7 @@ public class ProjDb extends PanacheEntityBase {
     @Basic
     @Column(name = "Description")
     public String description;
-    @ManyToOne
-    @JoinColumn(name = "UserID")
-    private User user;
+
 
     public int getProjId() {
         return projId;
@@ -53,13 +51,6 @@ public class ProjDb extends PanacheEntityBase {
         this.description = description;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

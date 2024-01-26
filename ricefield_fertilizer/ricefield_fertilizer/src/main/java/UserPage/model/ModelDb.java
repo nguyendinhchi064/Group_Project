@@ -4,85 +4,78 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 
+import java.io.InputStream;
 import java.util.Objects;
 
-@Entity
-@Table(name = "model_db", schema = "mydatabase")
-public class ModelDb extends PanacheEntityBase {
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    @Column(name = "ModelID")
-    private int modelId;
-    @Basic
-    @Column(name = "ModelName")
-    private String modelName;
-    @Basic
-    @Column(name = "ModelData")
-    private String modelData;
-    @ManyToOne
-    @JoinColumn(name = "ProjID")
-    private ProjDb projDb;
-
-    public int getModelId() {
-        return modelId;
-    }
-
-    public void setModelId(int modelId) {
-        this.modelId = modelId;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    public String getModelData() {
-        return modelData;
-    }
-
-    public void setModelData(String modelData) {
-        this.modelData = modelData;
-    }
+    @Entity
+    @Table(name = "model_db", schema = "mydatabase")
+    public class ModelDb extends PanacheEntityBase {
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        @Id
+        @Column(name = "ModelID")
+        private int modelId;
+        @Basic
+        @Column(name = "ModelName")
+        private String modelName;
+        @Basic
+        @Column(name = "ModelDescription")
+        private String modelDescription;
 
 
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        public int getModelId() {
+            return modelId;
+        }
 
-        ModelDb modelDb = (ModelDb) o;
+        public void setModelId(int modelId) {
+            this.modelId = modelId;
+        }
 
-        if (modelId != modelDb.modelId) return false;
-        if (!Objects.equals(modelName, modelDb.modelName)) return false;
-        return Objects.equals(modelData, modelDb.modelData);
-    }
+        public String getModelName() {
+            return modelName;
+        }
 
-    @Override
-    public int hashCode() {
-        int result = modelId;
-        result = 31 * result + (modelName != null ? modelName.hashCode() : 0);
-        result = 31 * result + (modelData != null ? modelData.hashCode() : 0);
-        return result;
-    }
+        public void setModelName(String modelName) {
+            this.modelName = modelName;
+        }
 
-    public ProjDb getProjDb() {
-        return projDb;
-    }
+        public String getModelDescription() {
+            return modelDescription;
+        }
 
-    public void setProjDb(ProjDb projDb) {
-        this.projDb = projDb;
-    }
+        public void setModelDescription(String modelData) {
+            this.modelDescription = modelDescription;
+        }
+
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ModelDb modelDb = (ModelDb) o;
+
+            if (modelId != modelDb.modelId) return false;
+            if (!Objects.equals(modelName, modelDb.modelName)) return false;
+            return Objects.equals(modelDescription, modelDb.modelDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = modelId;
+            result = 31 * result + (modelName != null ? modelName.hashCode() : 0);
+            result = 31 * result + (modelDescription != null ? modelDescription.hashCode() : 0);
+            return result;
+        }
+
     @Transactional
     public static ModelDb updateModel(int modelId, ModelDb updatedProject) {
         ModelDb existingProject = findById(modelId);
 
         if (existingProject != null) {
             existingProject.setModelName(updatedProject.getModelName());;
-            existingProject.setModelData(updatedProject.getModelData());
+            existingProject.setModelDescription(updatedProject.getModelDescription());
             existingProject.persist();
         }
 
@@ -95,4 +88,14 @@ public class ModelDb extends PanacheEntityBase {
             modelDb.delete();
         }
     }
+        @Transient
+        private InputStream fileContent;
+
+        public InputStream getFileContent() {
+            return fileContent;
+        }
+
+        public void setFileContent(InputStream fileContent) {
+            this.fileContent = fileContent;
+        }
 }
