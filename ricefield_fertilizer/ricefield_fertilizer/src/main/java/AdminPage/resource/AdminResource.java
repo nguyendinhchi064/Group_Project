@@ -18,7 +18,6 @@ import java.util.Set;
 
 @Path("/admin")
 @RequestScoped
-@RolesAllowed("Admin")
 public class AdminResource {
 
     @Context
@@ -27,6 +26,7 @@ public class AdminResource {
     private static final Logger LOG = Logger.getLogger(AuthResource.class);
     @GET
     @Path("/all_userinfo")
+    @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
     public List<User> getAllUsers() {
         return User.listAll();
@@ -34,6 +34,7 @@ public class AdminResource {
 
     @GET
     @Path("/userinfo")
+    @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public String getUserInfo() {
@@ -53,7 +54,8 @@ public class AdminResource {
     }
 
     @GET
-    @Path("/{userId}")
+    @Path("/GetUserBy{userId}")
+    @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserById(@PathParam("userId") Long userId) {
         // Retrieve user information by userId
@@ -67,7 +69,8 @@ public class AdminResource {
     }
     @Transactional
     @PUT
-    @Path("/{userId}")
+    @Path("/UpdateUserBy{userId}")
+    @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateUser(@PathParam("userId") Long userId, User updatedUser) {
@@ -91,7 +94,8 @@ public class AdminResource {
     }
     @Transactional
     @DELETE
-    @Path("/{userId}")
+    @Path("/DeleteUserBy{userId}")
+    @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteUser(@PathParam("userId") Long userId) {
         // Retrieve the existing user from the database

@@ -1,14 +1,11 @@
 package UserPage.model;
 
-import Login_Register.model.User;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.inject.Inject;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
-import org.eclipse.microprofile.jwt.Claim;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Objects;
+import java.util.List;
 
 
 @Entity
@@ -18,7 +15,9 @@ public class ProjDb extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Id
     @Column(name = "ProjID")
-    private int projId;
+    private long projId;
+    @OneToMany(mappedBy = "projDb")
+    private List<DataEntity> dataEntities;
     @Basic
     @Column(name = "Projname")
     public String projname;
@@ -27,7 +26,7 @@ public class ProjDb extends PanacheEntityBase {
     public String description;
 
 
-    public int getProjId() {
+    public long getProjId() {
         return projId;
     }
 
@@ -51,6 +50,8 @@ public class ProjDb extends PanacheEntityBase {
         this.description = description;
     }
 
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -65,10 +66,10 @@ public class ProjDb extends PanacheEntityBase {
 
     @Override
     public int hashCode() {
-        int result = projId;
+        long result = projId;
         result = 31 * result + (projname != null ? projname.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
-        return result;
+        return (int) result;
     }
 
     public static ProjDb findById(int id) {
@@ -94,5 +95,14 @@ public class ProjDb extends PanacheEntityBase {
         if (project != null) {
             project.delete();
         }
+    }
+
+
+    public List<DataEntity> getDataEntities() {
+        return dataEntities;
+    }
+
+    public void setDataEntities(List<DataEntity> dataEntities) {
+        this.dataEntities = dataEntities;
     }
 }

@@ -1,22 +1,17 @@
 package Login_Register.resources;
 
+import Login_Register.model.RegisterRequest;
 import Login_Register.model.User;
 import Login_Register.model.LoginRequest;
 import jakarta.annotation.security.PermitAll;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.util.Arrays;
-import java.util.HashSet;
 
 
-
-import io.smallrye.jwt.build.Jwt;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.jwt.Claims;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
-import static io.smallrye.jwt.build.Jwt.claim;
 
 
 @Path("/auth")
@@ -24,15 +19,22 @@ import static io.smallrye.jwt.build.Jwt.claim;
 public class AuthResource {
 
     @POST
-    @PermitAll
-    @Transactional
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.APPLICATION_JSON)
     @Path("/register")
-    public String register(User user) {
-        user.persist();
-        System.out.println(user.username + " " + user.password);
-        return "Register success";
+    @Transactional
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response registerUser(RegisterRequest registerRequest) {
+        if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Passwords do not match").build();
+        }
+        User newUser = new User();
+        newUser.setUsername(registerRequest.getUsername());
+        newUser.setPassword(registerRequest.getPassword());
+        newUser.setEmail(registerRequest.getEmail());
+        newUser.setRole(registerRequest.getRole());
+        newUser.persist();
+
+        return Response.status(Response.Status.CREATED).entity("User registered successfully").build();
     }
 
     @POST

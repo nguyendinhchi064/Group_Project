@@ -4,7 +4,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
 
-import java.io.InputStream;
 import java.util.Objects;
 
     @Entity
@@ -13,23 +12,21 @@ import java.util.Objects;
         @GeneratedValue(strategy = GenerationType.AUTO)
         @Id
         @Column(name = "ModelID")
-        private int modelId;
+        private long modelId;
         @Basic
         @Column(name = "ModelName")
         private String modelName;
         @Basic
         @Column(name = "ModelDescription")
         private String modelDescription;
+        @OneToOne
+        @JoinColumn(name = "modelDb")
+        private DataEntity dataEntity;
 
-
-
-        public int getModelId() {
+        public long getModelId() {
             return modelId;
         }
 
-        public void setModelId(int modelId) {
-            this.modelId = modelId;
-        }
 
         public String getModelName() {
             return modelName;
@@ -43,7 +40,7 @@ import java.util.Objects;
             return modelDescription;
         }
 
-        public void setModelDescription(String modelData) {
+        public void setModelDescription(String modelDescription) {
             this.modelDescription = modelDescription;
         }
 
@@ -63,10 +60,10 @@ import java.util.Objects;
 
         @Override
         public int hashCode() {
-            int result = modelId;
+            long result = modelId;
             result = 31 * result + (modelName != null ? modelName.hashCode() : 0);
             result = 31 * result + (modelDescription != null ? modelDescription.hashCode() : 0);
-            return result;
+            return (int) result;
         }
 
     @Transactional
@@ -88,14 +85,9 @@ import java.util.Objects;
             modelDb.delete();
         }
     }
-        @Transient
-        private InputStream fileContent;
 
-        public InputStream getFileContent() {
-            return fileContent;
+        public DataEntity getDataEntity() {
+            return dataEntity;
         }
 
-        public void setFileContent(InputStream fileContent) {
-            this.fileContent = fileContent;
-        }
-}
+    }

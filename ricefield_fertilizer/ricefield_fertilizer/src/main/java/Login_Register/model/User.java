@@ -150,10 +150,15 @@ public class User extends PanacheEntityBase {
             return "False";
         }
 
-        String token =
-                Jwt.upn(user.username)
-                        .groups(new HashSet<>(groups))
-                        .sign();
+        // Set the token lifespan, for example, 1 hour (3600 seconds)
+        long durationSeconds = 3600;
+        long currentTimeInSeconds = System.currentTimeMillis() / 1000;
+        long expirationTime = currentTimeInSeconds + durationSeconds;
+
+        String token = Jwt.upn(user.username)
+                .groups(new HashSet<>(groups))
+                .expiresAt(expirationTime)  // Set the expiration time
+                .sign();
         System.out.println(token);
         return token;
     }
