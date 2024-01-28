@@ -1,58 +1,136 @@
 package UserPage.resources.UserPage;
 
 
-
-import UserPage.model.ModelDb;
-import UserPage.model.ModelForm;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import UserPage.model.FileUploadForm;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 
 @Path("/Model")
 public class ModelResource {
+    private static final Logger LOGGER = Logger.getLogger(ModelResource.class.getName());
+
+    @ConfigProperty(name = "file.upload.dir")
+    String uploadDir;
+
+    @Inject
+    SecurityContext securityContext;
 
     @POST
-    @Path("/add")
+    @RolesAllowed("User")
+    @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response addModel(@MultipartForm ModelForm modelForm) {
+    public Response uploadFile(@MultipartForm FileUploadForm form) {
+        String username = securityContext.getUserPrincipal().getName();
         try {
-            // Create a new ModelDb object
-            ModelDb modelDb = new ModelDb();
-            modelDb.setModelName(modelForm.getModelName());
-            modelDb.setModelDescription(modelForm.getModelDescription());
+            LOGGER.info("Uploading file for user: " + username);
 
-            // Process the file
-            String filePath = saveFile(modelForm.getFile());
-
-            // Here, instead of saving the model to the database, you can save the filePath
-            // and other model information to a file or another storage mechanism as per your requirement
-
-            return Response.status(Response.Status.CREATED).entity("Model added successfully with file stored at " + filePath).build();
+            String userUploadDir = Paths.get(uploadDir, username, "upload").toString();
+            File userDir = new File(userUploadDir);
+            if (!userDir.exists()) {
+                boolean created = userDir.mkdirs();
+                if (!created) {
+                    LOGGER.warning("Failed to create directory: " + userUploadDir);
+                }
+            }
+            String filename = Paths.get(userUploadDir, form.getFileName()).toString();
+            try (InputStream inputStream = form.getFileData();
+                 OutputStream outputStream = new FileOutputStream(filename)) {
+                inputStream.transferTo(outputStream);
+            }
+            LOGGER.info("File uploaded successfully for user: " + username);
+            return Response.ok("File uploaded successfully").build();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error saving file for user: " + username, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error saving file").build();
+        } catch (NullPointerException e) {
+            LOGGER.log(Level.SEVERE, "Security context or principal is null", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Authentication error").build();
         } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(Response.Status.BAD_REQUEST).entity("Error processing the request").build();
+            LOGGER.log(Level.SEVERE, "Unexpected error occurred", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal server error").build();
         }
     }
 
-    private String saveFile(InputStream fileContent) throws Exception {
-        String fileName = "uniqueFileName"; // Generate a unique file name
-        String directory = "C:\\Users\\ADMIN\\Downloads\\GP_PREDICT-20240128T162736Z-001\\GP_PREDICT"; // Directory to save the file
-        java.nio.file.Path filePath = Paths.get(directory, fileName);
+    @POST
+    @RolesAllowed("User")
+    @Path("/predict")
+    public Response predict(String fileName) {
+        String username = securityContext.getUserPrincipal().getName();
+        try {
+            String inputPath = Paths.get(uploadDir, username, "upload", fileName).toString();
+            String resultDir = Paths.get(uploadDir, username, "result").toString();
+            String pngDir = Paths.get(uploadDir, username, "png").toString();
 
-        Files.copy(fileContent, filePath, StandardCopyOption.REPLACE_EXISTING);
-        return filePath.toString();
+            // Ensure directories exist
+            new File(resultDir).mkdirs();
+            new File(pngDir).mkdirs();
+
+            runPredictionCommand(inputPath, resultDir, pngDir);
+
+            return Response.ok("Prediction started").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @RolesAllowed("User")
+    @Path("/png/{fileName}")
+    @Produces("image/png")
+    public Response getPngFile(@PathParam("fileName") String fileName) {
+        String username = securityContext.getUserPrincipal().getName();
+        try {
+            String pngFilePath = Paths.get(uploadDir, username, "png", fileName).toString();
+            File file = new File(pngFilePath);
+
+            if (!file.exists()) {
+                return Response.status(Response.Status.NOT_FOUND).entity("File not found").build();
+            }
+
+            FileInputStream fileInputStream = new FileInputStream(file);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fileInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+
+            byte[] imageData = outputStream.toByteArray();
+            return Response.ok(imageData).build();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error reading PNG file: " + fileName, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error retrieving file").build();
+        }
+    }
+
+
+
+    private void runPredictionCommand(String inputPath, String outputPath, String pngOutputPath) throws IOException, InterruptedException {
+        ProcessBuilder processBuilder = new ProcessBuilder("python", "Predict.py", inputPath, outputPath, pngOutputPath);
+
+        // Redirect the error stream and output stream of the process to the current Java process
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        Process process = processBuilder.start();
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0) {
+            throw new RuntimeException("Prediction script exited with error code: " + exitCode);
+        }
     }
 }
 

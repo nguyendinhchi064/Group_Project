@@ -18,9 +18,6 @@ public class DataEntity extends PanacheEntityBase {
     @Column(name = "DataName")
     private String DataName;
 
-    @OneToOne
-    @JoinColumn(name = "modelId")
-    private ModelDb modelDb;
     @ManyToOne
     @JoinColumn(name = "projId")
     private ProjDb projDb;
@@ -62,9 +59,6 @@ public class DataEntity extends PanacheEntityBase {
         }
     }
 
-    public ModelDb getModelDb() {
-        return modelDb;
-    }
 
 
     public ProjDb getProjDb() {

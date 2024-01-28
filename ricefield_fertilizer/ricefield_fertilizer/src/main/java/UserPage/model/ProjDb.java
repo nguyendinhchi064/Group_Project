@@ -1,5 +1,6 @@
 package UserPage.model;
 
+import Login_Register.model.User;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
@@ -16,6 +17,9 @@ public class ProjDb extends PanacheEntityBase {
     @Id
     @Column(name = "ProjID")
     private long projId;
+    @ManyToOne
+    @JoinColumn(name = "UserID", nullable = false)
+    private User user;
     @OneToMany(mappedBy = "projDb")
     private List<DataEntity> dataEntities;
     @Basic
@@ -104,5 +108,13 @@ public class ProjDb extends PanacheEntityBase {
 
     public void setDataEntities(List<DataEntity> dataEntities) {
         this.dataEntities = dataEntities;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

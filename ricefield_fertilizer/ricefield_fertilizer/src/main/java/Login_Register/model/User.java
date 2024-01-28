@@ -1,5 +1,6 @@
 package Login_Register.model;
 
+import UserPage.model.ProjDb;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.smallrye.jwt.build.Jwt;
@@ -42,7 +43,8 @@ public class User extends PanacheEntityBase {
     @Column(unique = true)
     @Email
     public String email;
-
+    @OneToMany(mappedBy = "user")
+    private List<ProjDb> projects;
 
 
     public String getUsername() {
@@ -147,8 +149,7 @@ public class User extends PanacheEntityBase {
             groups = Arrays.asList("User", "Admin");
         } else if(user.isUser()) {
             groups = Arrays.asList("User");
-        }
-        else {
+        } else {
             return "False";
         }
 
@@ -157,11 +158,20 @@ public class User extends PanacheEntityBase {
         long currentTimeInSeconds = System.currentTimeMillis() / 1000;
         long expirationTime = currentTimeInSeconds + durationSeconds;
 
-        String token = Jwt.upn(user.username)
+        String token = Jwt.upn(user.getUsername()) // User Principal Name
                 .groups(new HashSet<>(groups))
-                .expiresAt(expirationTime)  // Set the expiration time
+                .claim("username", user.getUsername()) // Add username as a custom claim
+                .expiresAt(expirationTime)
                 .sign();
         System.out.println(token);
         return token;
+    }
+
+    public List<ProjDb> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<ProjDb> projects) {
+        this.projects = projects;
     }
 }
