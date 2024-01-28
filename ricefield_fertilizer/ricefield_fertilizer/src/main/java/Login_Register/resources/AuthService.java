@@ -11,6 +11,7 @@ import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.util.ModularCrypt;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class AuthService {
@@ -44,5 +45,25 @@ public class AuthService {
     public User getUser(LoginRequest loginRequest) {
         List<User> userList = User.list("username", loginRequest.getUsername());
         return userList.isEmpty() ? null : userList.get(0);
+    }
+
+    public boolean isValidEmail(String email) {
+        if (email == null) return false;
+        String repair = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@" +
+                "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+                "A-Z]{2,7}$";
+        return Pattern.matches(repair, email);
+    }
+    public boolean isValidPassword(String password) {
+        // Minimum length of 5 characters, at least one uppercase letter, and at least one special character
+        String regex = "^(?=.*[A-Z])(?=.*[!@#$%^&*()-+]).{5,}$";
+        return Pattern.matches(regex, password);
+    }
+    public boolean userExists(String username) {
+        return (User.count("username", username) > 0);
+    }
+
+    public boolean emailExists(String email) {
+        return (User.count("email", email) > 0);
     }
 }

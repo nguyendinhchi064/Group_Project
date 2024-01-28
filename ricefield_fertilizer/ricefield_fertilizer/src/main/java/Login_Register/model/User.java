@@ -1,6 +1,7 @@
 package Login_Register.model;
 
 import UserPage.model.ProjDb;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.smallrye.jwt.build.Jwt;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
+
 
 
 
@@ -43,7 +44,7 @@ public class User extends PanacheEntityBase {
     @Column(unique = true)
     @Email
     public String email;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<ProjDb> projects;
 
 
@@ -52,11 +53,8 @@ public class User extends PanacheEntityBase {
     }
 
     public void setUsername(String username) {
-        if (userExists(username)) {
-            throw new IllegalArgumentException("This user is already exist");
-        } else {
             this.username = username;
-        }
+
     }
 
     public String getPassword() {
@@ -64,12 +62,7 @@ public class User extends PanacheEntityBase {
     }
 
     public void setPassword(String password) {
-        // Validate password before hashing
-        if (isValidPassword(password)) {
             this.password = BcryptUtil.bcryptHash(password);
-        } else {
-            throw new IllegalArgumentException("Invalid password");
-        }
     }
 
     public String getEmail() {
@@ -77,13 +70,9 @@ public class User extends PanacheEntityBase {
     }
 
     public void setEmail(String email) {
-        if (emailExists(email)) {
-            System.out.println("This user is already exist");
-            throw new IllegalArgumentException("This email is already exist");
-        } else {
             this.email = email;
         }
-    }
+
 
     public String getRole() {
         return role;
@@ -109,20 +98,8 @@ public class User extends PanacheEntityBase {
     public static User findByUsername(String username) {
         return User.find("username", username).firstResult();
     }
-    private boolean userExists(String username) {
-        return (User.count("username", username) > 0);
-    }
-
-    private boolean emailExists(String email) {
-        return (User.count("email", email) > 0);
-    }
 
 
-    private boolean isValidPassword(String password) {
-        // Minimum length of 5 characters, at least one uppercase letter, and at least one special character
-        String regex = "^(?=.*[A-Z])(?=.*[!@#$%^&*()-+]).{5,}$";
-        return Pattern.matches(regex, password);
-    }
 
     public long getUserid() {
         return userid;
@@ -153,24 +130,24 @@ public class User extends PanacheEntityBase {
             return "False";
         }
 
-        // Set the token lifespan, for example, 1 hour (3600 seconds)
         long durationSeconds = 3600;
         long currentTimeInSeconds = System.currentTimeMillis() / 1000;
         long expirationTime = currentTimeInSeconds + durationSeconds;
 
-        String token = Jwt.upn(user.getUsername()) // User Principal Name
+        String token = Jwt.upn(user.getUsername())
                 .groups(new HashSet<>(groups))
-                .claim("username", user.getUsername()) // Add username as a custom claim
+                .claim("username", user.getUsername())
+                .claim("userId", user.getUserid())
                 .expiresAt(expirationTime)
                 .sign();
         System.out.println(token);
         return token;
     }
-
+    @JsonIgnore
     public List<ProjDb> getProjects() {
         return projects;
     }
-
+    @JsonIgnore
     public void setProjects(List<ProjDb> projects) {
         this.projects = projects;
     }

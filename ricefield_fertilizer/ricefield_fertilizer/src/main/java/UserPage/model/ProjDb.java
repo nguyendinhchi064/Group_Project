@@ -1,6 +1,7 @@
 package UserPage.model;
 
 import Login_Register.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
@@ -20,7 +21,7 @@ public class ProjDb extends PanacheEntityBase {
     @ManyToOne
     @JoinColumn(name = "UserID", nullable = false)
     private User user;
-    @OneToMany(mappedBy = "projDb")
+    @OneToMany(mappedBy = "projDb", fetch = FetchType.LAZY)
     private List<DataEntity> dataEntities;
     @Basic
     @Column(name = "Projname")
@@ -101,11 +102,12 @@ public class ProjDb extends PanacheEntityBase {
         }
     }
 
-
+    @JsonIgnore
     public List<DataEntity> getDataEntities() {
         return dataEntities;
     }
 
+    @JsonIgnore
     public void setDataEntities(List<DataEntity> dataEntities) {
         this.dataEntities = dataEntities;
     }

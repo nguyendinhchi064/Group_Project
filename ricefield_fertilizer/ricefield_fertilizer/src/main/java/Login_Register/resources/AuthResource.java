@@ -3,6 +3,7 @@ package Login_Register.resources;
 import Login_Register.model.RegisterRequest;
 import Login_Register.model.User;
 import Login_Register.model.LoginRequest;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,7 +12,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.jboss.logging.Logger;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -24,19 +24,8 @@ public class AuthResource {
     @ConfigProperty(name = "file.upload.dir")
     String uploadDir;
 
-    private static final Logger LOG = Logger.getLogger(AuthResource.class);
-
-
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@" +
-                    "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-                    "A-Z]{2,7}$"
-    );
-
-    private boolean isValidEmail(String email) {
-        if (email == null) return false;
-        return EMAIL_PATTERN.matcher(email).matches();
-    }
+    @Inject
+    AuthService authService;
 
     @POST
     @Path("/register")
@@ -47,7 +36,16 @@ public class AuthResource {
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             return Response.status(Response.Status.BAD_REQUEST).entity("{\"message\":\"Passwords do not match\"}").build();
         }
-        if (!isValidEmail(registerRequest.getEmail())) {
+        if (!authService.isValidEmail(registerRequest.getEmail())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("{\"message\":\"Invalid email format\"}").build();
+        }
+        if (!authService.isValidPassword(registerRequest.getPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("{\"message\":\"Invalid email format\"}").build();
+        }
+        if (authService.userExists(registerRequest.getUsername())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("{\"message\":\"Invalid email format\"}").build();
+        }
+        if (authService.emailExists(registerRequest.getEmail())) {
             return Response.status(Response.Status.BAD_REQUEST).entity("{\"message\":\"Invalid email format\"}").build();
         }
         User newUser = new User();

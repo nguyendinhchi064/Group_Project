@@ -1,14 +1,19 @@
 package UserPage.resources.UserPage;
 
 
+import UserPage.model.DataDTO;
+import UserPage.model.DataEntity;
 import UserPage.model.FileUploadForm;
+import UserPage.model.ProjDb;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
 
@@ -27,6 +32,53 @@ public class ModelResource {
 
     @Inject
     SecurityContext securityContext;
+
+
+    @POST
+    @Transactional
+    @Path("/add")
+    @RolesAllowed("User")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addDataEntity(DataDTO dataDTO) {
+        ProjDb projDb = ProjDb.findById(dataDTO.getProjId());
+        if (projDb == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Project not found or unauthorized access").build();
+        }
+
+        DataEntity dataEntity = new DataEntity();
+        dataEntity.setDataName(dataDTO.getDataName());
+        dataEntity.setProjDb(projDb);
+        dataEntity.persist();
+        return Response.status(Response.Status.CREATED).entity(dataEntity).build();
+    }
+
+    @GET
+    @Path("/get/{id}")
+    @RolesAllowed({"User", "Admin"})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDataEntity(@PathParam("id") long id) {
+        DataEntity dataEntity = DataEntity.findById(id);
+        if (dataEntity == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("DataEntity not found").build();
+        }
+        return Response.ok(dataEntity).build();
+    }
+
+
+    @DELETE
+    @Transactional
+    @Path("/deleteDataBy{id}")
+    @RolesAllowed("User")
+    public Response deleteDataEntity(@PathParam("id") long id) {
+        DataEntity entity = DataEntity.findById(id);
+        if (entity == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("DataEntity not found").build();
+        }
+
+        entity.delete();
+        return Response.noContent().build();
+    }
 
     @POST
     @RolesAllowed("User")
@@ -74,7 +126,6 @@ public class ModelResource {
             String resultDir = Paths.get(uploadDir, username, "result").toString();
             String pngDir = Paths.get(uploadDir, username, "png").toString();
 
-            // Ensure directories exist
             new File(resultDir).mkdirs();
             new File(pngDir).mkdirs();
 
