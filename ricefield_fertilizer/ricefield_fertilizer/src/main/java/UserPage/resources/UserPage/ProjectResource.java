@@ -3,7 +3,6 @@ package UserPage.resources.UserPage;
 import UserPage.model.ProjDb;
 import UserPage.model.ProjDbDTO;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,6 +15,8 @@ public class ProjectResource {
 
     @POST
     @Transactional
+    @Path("/Add")
+    @RolesAllowed("User")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addProject(ProjDbDTO projDbDTO) {

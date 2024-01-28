@@ -33,23 +33,15 @@ public class AdminResource {
     }
 
     @GET
-    @Path("/userinfo")
+    @Path("/findByUsername")
     @RolesAllowed("Admin")
     @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public String getUserInfo() {
-        if (securityContext.getUserPrincipal() instanceof DefaultJWTCallerPrincipal jwtPrincipal) {
-            LOG.info("JWT Principal: " + jwtPrincipal);
-
-            // Check user roles
-            Set<String> userRoles = jwtPrincipal.getGroups();
-            LOG.info("User Roles: " + userRoles);
-
-            String userId = jwtPrincipal.getClaim("userId");
-            return "User ID: " + userId;
+    public Response findUserByUsername(@QueryParam("username") String username) {
+        User user = User.findByUsername(username);
+        if (user != null) {
+            return Response.ok(user).build();
         } else {
-            LOG.warn("User not authenticated or JWT principal not available.");
-            return "User not authenticated.";
+            return Response.status(Response.Status.NOT_FOUND).entity("User not found").build();
         }
     }
 

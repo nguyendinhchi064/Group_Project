@@ -1,12 +1,19 @@
 package Login_Register.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class RegisterRequest {
+    @JsonProperty
     private String username;
+    @JsonProperty
     private String password;
+    @JsonProperty
     private String confirmPassword;
+    @JsonProperty
     private String email;
+    @JsonProperty
     private String role;
 
     // Getters and Setters

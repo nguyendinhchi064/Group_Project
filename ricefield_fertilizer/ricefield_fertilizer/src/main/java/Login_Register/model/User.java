@@ -104,7 +104,9 @@ public class User extends PanacheEntityBase {
         if (!Objects.equals(email, user.email)) return false;
         return Objects.equals(role, user.role);
     }
-
+    public static User findByUsername(String username) {
+        return User.find("username", username).firstResult();
+    }
     private boolean userExists(String username) {
         return (User.count("username", username) > 0);
     }
