@@ -72,7 +72,6 @@ public class AuthResource {
         AuthService authService = new AuthService();
         if (authService.isValidLogin(loginRequest)) {
             System.out.println("Login success");
-            /* fetch user from database using request information */
             User user = authService.getUser(loginRequest);
             String token = user.generate(user);
             System.out.println("DEBUG #######: " + token);

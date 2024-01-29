@@ -18,10 +18,6 @@ public class DataEntity extends PanacheEntityBase {
     @Column(name = "DataName")
     private String DataName;
 
-    @ManyToOne
-    @JoinColumn(name = "projId")
-    private ProjDb projDb;
-
     public String getDataName() {
         return DataName;
     }
@@ -60,12 +56,4 @@ public class DataEntity extends PanacheEntityBase {
     }
 
 
-
-    public ProjDb getProjDb() {
-        return projDb;
-    }
-
-    public void setProjDb(ProjDb projDb) {
-        this.projDb = projDb;
-    }
 }

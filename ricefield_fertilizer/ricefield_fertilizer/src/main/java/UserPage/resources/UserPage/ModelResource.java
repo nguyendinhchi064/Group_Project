@@ -1,10 +1,9 @@
 package UserPage.resources.UserPage;
 
 
+
 import UserPage.model.DataDTO;
 import UserPage.model.DataEntity;
-import UserPage.model.FileUploadForm;
-import UserPage.model.ProjDb;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -23,7 +22,7 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 
-@Path("/Model")
+@Path("/UploadFile")
 public class ModelResource {
     private static final Logger LOGGER = Logger.getLogger(ModelResource.class.getName());
 
@@ -38,18 +37,35 @@ public class ModelResource {
     @Transactional
     @Path("/add")
     @RolesAllowed("User")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addDataEntity(DataDTO dataDTO) {
-        ProjDb projDb = ProjDb.findById(dataDTO.getProjId());
-        if (projDb == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Project not found or unauthorized access").build();
+    public Response addDataEntity(@MultipartForm DataDTO dataUploadForm) {
+        String username = securityContext.getUserPrincipal().getName();
+
+        // Handle File Upload
+        String userUploadDir = Paths.get(uploadDir, username, "upload").toString();
+        File userDir = new File(userUploadDir);
+        if (!userDir.exists() && !userDir.mkdirs()) {
+            LOGGER.warning("Failed to create directory: " + userUploadDir);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Failed to create directory").build();
         }
 
+//        String filename = Paths.get(userUploadDir, dataUploadForm.getFileName()).toString();
+//        try (InputStream inputStream = dataUploadForm.getFileData();
+//             OutputStream outputStream = new FileOutputStream(filename)) {
+//            inputStream.transferTo(outputStream);
+//        } catch (IOException e) {
+//            LOGGER.log(Level.SEVERE, "Error saving file for user: " + username, e);
+//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error saving file").build();
+//        }
+
+        // Create DataEntity and Persist
         DataEntity dataEntity = new DataEntity();
-        dataEntity.setDataName(dataDTO.getDataName());
-        dataEntity.setProjDb(projDb);
+        dataEntity.setDataName(dataUploadForm.getDataName());
+        // Optionally set the file reference in dataEntity here
         dataEntity.persist();
+
+        LOGGER.info("File uploaded and data entity created successfully for user: " + username);
         return Response.status(Response.Status.CREATED).entity(dataEntity).build();
     }
 
@@ -69,7 +85,7 @@ public class ModelResource {
     @DELETE
     @Transactional
     @Path("/deleteDataBy{id}")
-    @RolesAllowed("User")
+    @RolesAllowed({"User","Admin"})
     public Response deleteDataEntity(@PathParam("id") long id) {
         DataEntity entity = DataEntity.findById(id);
         if (entity == null) {
@@ -80,41 +96,7 @@ public class ModelResource {
         return Response.noContent().build();
     }
 
-    @POST
-    @RolesAllowed("User")
-    @Path("/upload")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadFile(@MultipartForm FileUploadForm form) {
-        String username = securityContext.getUserPrincipal().getName();
-        try {
-            LOGGER.info("Uploading file for user: " + username);
 
-            String userUploadDir = Paths.get(uploadDir, username, "upload").toString();
-            File userDir = new File(userUploadDir);
-            if (!userDir.exists()) {
-                boolean created = userDir.mkdirs();
-                if (!created) {
-                    LOGGER.warning("Failed to create directory: " + userUploadDir);
-                }
-            }
-            String filename = Paths.get(userUploadDir, form.getFileName()).toString();
-            try (InputStream inputStream = form.getFileData();
-                 OutputStream outputStream = new FileOutputStream(filename)) {
-                inputStream.transferTo(outputStream);
-            }
-            LOGGER.info("File uploaded successfully for user: " + username);
-            return Response.ok("File uploaded successfully").build();
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error saving file for user: " + username, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error saving file").build();
-        } catch (NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Security context or principal is null", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Authentication error").build();
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error occurred", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal server error").build();
-        }
-    }
 
     @POST
     @RolesAllowed("User")
@@ -171,8 +153,6 @@ public class ModelResource {
 
     private void runPredictionCommand(String inputPath, String outputPath, String pngOutputPath) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder("python", "Predict.py", inputPath, outputPath, pngOutputPath);
-
-        // Redirect the error stream and output stream of the process to the current Java process
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
 
